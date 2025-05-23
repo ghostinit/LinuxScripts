@@ -1,12 +1,15 @@
 #!/bin/bash
-#
-sudo apt update && apt upgrade -y
 ROLE=$1
+
+sudo apt update && apt upgrade -y
+
+
 
 
 
 function host_setup() 
 {
+	sudo apt install vim neovim gparted gimp conky git apcupsd htop net-tools curl wget build-essential unzip
 	echo "Installing Brave Browser"
 	curl -fsS https://dl.brave.com/install.sh | sh
 	
@@ -26,6 +29,14 @@ function host_setup()
 		sudo apt remove --purge libreoffice-* thunderbird hexchat pidgin simple-scan rhythmbox xplayer -y
 		sudo apt autoremove --purge -y
 		sudo apt clean
+	fi
+
+	read -p "Setup KVM? (y/n): " setup_kvm
+	if [[ "$setup_kvm" =~ ^[Yy]$ ]]; then
+		sudo apt update && sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager -y 
+		sudo usermod -aG libvirt $(whoami)
+		newgrp libvirt
+
 	fi
 	
 	read -p "Harden system? (y/n): " harden_system
@@ -96,8 +107,19 @@ function host_setup()
 		echo "Installing AIDE"
 		sudo apt install aide -y
 		sudo aideinit
+
+		dpkg --get-selections > ~/packages_installed.txt
+
 	fi
 	
+}
+
+do_reboot() {
+	read -p "Reboot now? (y/n): " do_reboot
+	if [[ "$do_reboot" =~ ^[Yy]$ ]]; then
+		sudo reboot now
+	fi
+
 }
 
 if [ "$ROLE" == "host" ] || [ "$ROLE" == "HOST" ]; then
@@ -105,7 +127,8 @@ if [ "$ROLE" == "host" ] || [ "$ROLE" == "HOST" ]; then
 	#curl -fsSL https://raw.githubusercontent.com/ghostinit/LinuxScripts/main/modules/host_setup.sh -o /tmp/host_setup.sh
 	#chmod +x /tmp/host_setup.sh
 	#/tmp/host_setup.sh
-	host_setup()
+	host_setup
+	do_reboot
 else
 	echo "Unknown setup role"
 fi
