@@ -1,4 +1,5 @@
 #!/bin/bash
+exec > >(tee -a ~/setup_log.txt) 2>&1
 ROLE=$1
 
 sudo apt update && apt upgrade -y
@@ -9,7 +10,8 @@ sudo apt update && apt upgrade -y
 
 function host_setup() 
 {
-	sudo apt install vim neovim gparted gimp conky git apcupsd htop net-tools curl wget build-essential unzip
+	echo "Installing Packages"
+	sudo apt install vim neovim gparted gimp conky git apcupsd htop net-tools curl wget build-essential unzip -y
 	echo "Installing Brave Browser"
 	curl -fsS https://dl.brave.com/install.sh | sh
 	
@@ -21,8 +23,7 @@ function host_setup()
 	sudo apt install mullvad-vpn
 	echo "Mullvad Installed"
 	
-	echo "Installing Packages"
-	sudo apt install vim neovim gedit gparted -y
+	
 	
 	read -p "Remove bloat? (y/n): " remove_bloat
 	if [[ "$remove_bloat" =~ ^[Yy]$ ]]; then
@@ -36,7 +37,7 @@ function host_setup()
 		sudo apt update && sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager -y 
 		sudo usermod -aG libvirt $(whoami)
 		newgrp libvirt
-
+		# NOTE: `newgrp libvirt` affects the current shell session only. Log out and back in to fully apply.
 	fi
 	
 	read -p "Harden system? (y/n): " harden_system
@@ -58,7 +59,6 @@ function host_setup()
 		sudo systemctl start fail2ban
 		
 		echo "Setting up AppArmor"
-		sudo aa-status
 		sudo systemctl enable apparmor --now
 		
 		echo "Enabling automatic security updates"
@@ -117,7 +117,9 @@ function host_setup()
 do_reboot() {
 	read -p "Reboot now? (y/n): " do_reboot
 	if [[ "$do_reboot" =~ ^[Yy]$ ]]; then
+		echo "Rebooting... See you on the other side, operator. 🧙‍♂️"
 		sudo reboot now
+
 	fi
 
 }
